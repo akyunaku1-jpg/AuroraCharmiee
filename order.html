@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aurora Charmie 🍒 | Order</title>
+    <meta
+      name="description"
+      content="Order your handmade bracelets from Aurora Charmie 🍒 with easy WhatsApp templates and payment information."
+    />
+    <meta property="og:title" content="Aurora Charmie 🍒 | How to Order" />
+    <meta
+      property="og:description"
+      content="Follow simple order steps and send your bracelet request directly to Aurora Charmie 🍒 on WhatsApp."
+    />
+    <meta name="theme-color" content="#F4A7A7" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='50'%3E%F0%9F%8D%92%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="order">
+    <header class="navbar-wrapper">
+      <nav class="navbar">
+        <div class="brand-block">
+          <a href="index.html" class="brand">Aurora Charmie 🍒</a>
+          <p class="brand-tagline">handmade bracelet catalog</p>
+        </div>
+        <div class="nav-right">
+          <ul class="nav-links" id="desktopNav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="catalog.html">Catalog</a></li>
+            <li><a href="info.html">Info</a></li>
+            <li><a href="order.html">Order</a></li>
+          </ul>
+          <a
+            class="pill-btn nav-order-btn"
+            href="https://wa.me/6281234567890"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Order via WhatsApp →</a
+          >
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            🌙
+          </button>
+          <button
+            id="mobileMenuBtn"
+            class="mobile-menu-btn"
+            aria-label="Open mobile menu"
+            aria-expanded="false"
+            aria-controls="mobileMenu"
+          >
+            ☰
+          </button>
+        </div>
+      </nav>
+      <div id="mobileMenu" class="mobile-menu">
+        <a href="index.html">Home</a>
+        <a href="catalog.html">Catalog</a>
+        <a href="info.html">Info</a>
+        <a href="order.html">Order</a>
+        <a
+          href="https://wa.me/6281234567890"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="pill-btn"
+          >Order via WhatsApp →</a
+        >
+      </div>
+    </header>
+
+    <main id="mainContent" class="main-content">
+      <section class="section reveal">
+        <div class="section-heading">
+          <h2>How to Order 🛍️</h2>
+        </div>
+        <div class="order-layout">
+          <article class="sticky-note reveal">
+            <div class="tape" aria-hidden="true"></div>
+            <h3>Steps</h3>
+            <ol>
+              <li>Pilih produk favoritmu di katalog</li>
+              <li>Klik tombol "View →" untuk lihat detail</li>
+              <li>Klik "Pesan via WhatsApp" dan kirim pesananmu</li>
+              <li>Kami konfirmasi ketersediaan & info pembayaran</li>
+              <li>Gelangmu dikirim dengan penuh cinta 🫶</li>
+            </ol>
+          </article>
+          <article class="template-card reveal">
+            <h3>Message Template 💌</h3>
+            <form id="orderForm" class="order-form">
+              <input id="customerName" type="text" placeholder="Your name" required />
+              <input id="productName" type="text" placeholder="Product name" required />
+              <button type="submit" class="pill-btn">Open WhatsApp →</button>
+            </form>
+            <textarea id="templateText" readonly></textarea>
+            <div class="template-actions">
+              <button id="copyTemplateBtn" class="ghost-btn">📋 Copy Template</button>
+              <a
+                id="chatTemplateBtn"
+                class="pill-btn"
+                href="https://wa.me/6281234567890"
+                target="_blank"
+                rel="noopener noreferrer"
+                >💬 Chat WhatsApp →</a
+              >
+            </div>
+          </article>
+        </div>
+        <div class="order-info-box reveal">
+          <p><strong>Payment:</strong> BCA / GoPay / OVO</p>
+          <p><strong>Estimated delivery:</strong> 3–5 business days</p>
+          <p><strong>Custom order:</strong> Available for selected designs ✨</p>
+        </div>
+        <div class="social-section reveal">
+          <h3>Find us here 🌸</h3>
+          <p>📷 Instagram: @auroracharmie.id</p>
+          <p>🎵 TikTok: @auroracharmie</p>
+        </div>
+      </section>
+    </main>
+
+    <button
+      id="floatingWhatsapp"
+      class="floating-whatsapp"
+      aria-label="Order via WhatsApp"
+      title="Order via WhatsApp"
+    >
+      💬
+      <span class="wa-tooltip">Order via WhatsApp</span>
+    </button>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <h3>Aurora Charmie 🍒</h3>
+          <p>small beads, big feelings.</p>
+        </div>
+        <div class="footer-info">
+          <p>Instagram: @auroracharmie.id</p>
+          <p>(no cart, just direct order!)</p>
+        </div>
+        <div class="footer-action">
+          <a
+            href="https://wa.me/6281234567890"
+            class="footer-wa-btn"
+            target="_blank"
+            rel="noopener noreferrer"
+            >💬 Order via WhatsApp →</a
+          >
+          <p>Fast response via WhatsApp.</p>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <p>© 2025 Aurora Charmie 🍒. Made with 🫶</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

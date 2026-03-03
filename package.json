@@ -1,0 +1,17 @@
+{
+  "name": "aurora-charmie",
+  "version": "1.0.0",
+  "description": "Single-page handmade bracelet catalog website",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "catalog",
+    "bracelet",
+    "handmade",
+    "single-page"
+  ],
+  "author": "Aurora Charmie 🍒",
+  "license": "ISC"
+}
