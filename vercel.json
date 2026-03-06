@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/index", "destination": "/index.html" },
+    { "source": "/catalog", "destination": "/catalog.html" },
+    { "source": "/info", "destination": "/info.html" },
+    { "source": "/order", "destination": "/order.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/admin-login", "destination": "/admin-login.html" },
+    { "source": "/upload-image", "destination": "/api/upload-image" }
+  ]
+}

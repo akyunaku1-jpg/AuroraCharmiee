@@ -4,7 +4,8 @@
   "description": "Single-page handmade bracelet catalog website",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "node -e \"console.log('No build step required for static files')\""
   },
   "keywords": [
     "catalog",
