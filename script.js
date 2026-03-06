@@ -64,6 +64,7 @@ const localProducts = [
 const WA_NUMBER = "6281234567890";
 const FALLBACK_TEXT_COLOR = "#8b3c44";
 const PRODUCTS_TABLE = "products";
+const BADGE_OPTIONS = ["NEW", "SALE", "HOT", "LIMITED"];
 
 const productGrid = document.getElementById("productGrid");
 const filterGroup = document.getElementById("filterGroup");
@@ -90,21 +91,42 @@ let currentFilter = "All";
 let currentSearch = "";
 let isProductGridLoading = false;
 let supabaseClientPromise = null;
+let productsRealtimeChannel = null;
+
+function parseBadgeFromDescription(rawDescription) {
+  const text = typeof rawDescription === "string" ? rawDescription.trim() : "";
+  const match = text.match(/^\[badge:([A-Za-z0-9_-]{1,16})\]\s*/i);
+  if (!match) {
+    return {
+      badge: "",
+      description: text
+    };
+  }
+
+  const candidate = (match[1] || "").toUpperCase();
+  const badge = BADGE_OPTIONS.includes(candidate) ? candidate : "";
+  return {
+    badge,
+    description: text.slice(match[0].length).trim()
+  };
+}
 
 const CARD_SWITCH_DURATION_MS = 300;
 const MIN_SKELETON_CARDS = 4;
 
 function normalizeProduct(product) {
-  const description = product?.description || product?.desc || "";
+  const parsedDescription = parseBadgeFromDescription(product?.description || product?.desc || "");
   const imagePath = product?.image_path || product?.image || product?.images || "";
+  const defaultBadge = product?.is_new ?? product?.isNew ? "NEW" : "";
 
   return {
     id: product?.id || null,
     name: product?.name || "Unnamed Product",
     price: product?.price || "Rp 0",
     category: product?.category || "Misc",
-    desc: description,
-    isNew: Boolean(product?.is_new ?? product?.isNew),
+    desc: parsedDescription.description,
+    badge: parsedDescription.badge || defaultBadge,
+    isNew: Boolean(product?.is_new ?? product?.isNew) || Boolean(parsedDescription.badge),
     color: product?.color || "#F4A7A7",
     image: imagePath
   };
@@ -167,6 +189,36 @@ async function loadProducts() {
   }
 }
 
+async function subscribeToProductChanges() {
+  if (!productGrid || productsRealtimeChannel) {
+    return;
+  }
+
+  try {
+    const supabase = await getSupabaseClient();
+    productsRealtimeChannel = supabase
+      .channel("aurora-products-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: PRODUCTS_TABLE },
+        async () => {
+          await loadProducts();
+          renderProducts();
+        }
+      )
+      .subscribe();
+
+    window.addEventListener("beforeunload", () => {
+      if (productsRealtimeChannel) {
+        supabase.removeChannel(productsRealtimeChannel);
+        productsRealtimeChannel = null;
+      }
+    });
+  } catch (error) {
+    // Keep catalog functional even if realtime is unavailable.
+  }
+}
+
 function renderProductPlaceholder(color, name) {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="${name}">
@@ -199,13 +251,14 @@ function getProductImageMarkup(product, className) {
 }
 
 function productCardTemplate(product, index) {
+  const badgeText = product.badge || (product.isNew ? "NEW" : "");
   return `
     <article class="product-card reveal" data-id="${index}">
       ${getProductImageMarkup(product, "product-image")}
       <div class="product-body">
         <div class="badge-row">
           <span class="badge">${product.category}</span>
-          ${product.isNew ? '<span class="badge new">NEW</span>' : ""}
+          ${badgeText ? `<span class="badge new">${badgeText}</span>` : ""}
         </div>
         <h3 class="product-name">${product.name}</h3>
         <p class="product-price">${product.price}</p>
@@ -290,6 +343,7 @@ function openProductModal(productIndex) {
     return;
   }
 
+  const badgeText = product.badge || (product.isNew ? "NEW" : "");
   const waMessage = makeProductMessage(product);
   const waLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMessage)}`;
   const shareText = `${product.name} - ${product.price} | ${product.desc}`;
@@ -301,7 +355,7 @@ function openProductModal(productIndex) {
     <p>${product.desc}</p>
     <div class="badge-row">
       <span class="badge">${product.category}</span>
-      ${product.isNew ? '<span class="badge new">NEW</span>' : ""}
+      ${badgeText ? `<span class="badge new">${badgeText}</span>` : ""}
     </div>
     <div class="modal-actions">
       <a class="pill-btn" href="${waLink}" target="_blank" rel="noopener noreferrer">Order via WhatsApp →</a>
@@ -601,6 +655,7 @@ async function init() {
 
   await loadProducts();
   renderProducts();
+  await subscribeToProductChanges();
   updateTemplateText();
   showLoadingThenReveal();
 }

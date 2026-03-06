@@ -49,6 +49,15 @@
             Is New
           </label>
 
+          <label for="productBadge">Badge (optional)</label>
+          <select id="productBadge">
+            <option value="">None</option>
+            <option value="NEW">NEW</option>
+            <option value="SALE">SALE</option>
+            <option value="HOT">HOT</option>
+            <option value="LIMITED">LIMITED</option>
+          </select>
+
           <label for="productImage">Product image (jpg/png/webp)</label>
           <input id="productImage" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
           <small class="hint-text">Upload optional when editing. Keep empty to use current image.</small>
@@ -72,6 +81,7 @@
                 <th>Name</th>
                 <th>Price</th>
                 <th>Category</th>
+                <th>Badge</th>
                 <th>Actions</th>
               </tr>
             </thead>

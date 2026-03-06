@@ -1,5 +1,6 @@
 const PRODUCTS_TABLE = "products";
 const CATEGORY_OPTIONS = ["Cherry", "Flower", "Heart", "Mix", "Pastel"];
+const BADGE_OPTIONS = ["NEW", "SALE", "HOT", "LIMITED"];
 
 const pageType = document.body?.dataset?.adminPage || "";
 const loginForm = document.getElementById("adminLoginForm");
@@ -16,6 +17,7 @@ const productPriceInput = document.getElementById("productPrice");
 const productCategoryInput = document.getElementById("productCategory");
 const productDescriptionInput = document.getElementById("productDescription");
 const productIsNewInput = document.getElementById("productIsNew");
+const productBadgeInput = document.getElementById("productBadge");
 const productColorInput = document.getElementById("productColor");
 const productImageInput = document.getElementById("productImage");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
@@ -25,6 +27,7 @@ const saveProductBtn = document.getElementById("saveProductBtn");
 let supabaseClientPromise = null;
 let currentProducts = [];
 let usingLegacyColumns = false;
+let runtimeConfig = null;
 
 async function getSupabaseClient() {
   if (supabaseClientPromise) {
@@ -46,6 +49,7 @@ async function getSupabaseClient() {
       throw new Error("Supabase runtime config is missing.");
     }
 
+    runtimeConfig = config;
     return window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
   })();
 
@@ -77,6 +81,43 @@ function setLoginError(message) {
   loginError.textContent = message;
 }
 
+function parseBadgeFromDescription(rawDescription) {
+  const text = typeof rawDescription === "string" ? rawDescription.trim() : "";
+  const match = text.match(/^\[badge:([A-Za-z0-9_-]{1,16})\]\s*/i);
+  if (!match) {
+    return {
+      badge: "",
+      description: text
+    };
+  }
+
+  const candidate = (match[1] || "").toUpperCase();
+  const badge = BADGE_OPTIONS.includes(candidate) ? candidate : "";
+  return {
+    badge,
+    description: text.slice(match[0].length).trim()
+  };
+}
+
+function encodeDescriptionWithBadge(description, badge) {
+  const safeDescription = typeof description === "string" ? description.trim() : "";
+  const normalizedBadge = BADGE_OPTIONS.includes((badge || "").toUpperCase()) ? badge.toUpperCase() : "";
+  if (!normalizedBadge) {
+    return safeDescription;
+  }
+  return `[badge:${normalizedBadge}] ${safeDescription}`;
+}
+
+function createStorageObjectName(fileName) {
+  const safeName = (fileName || "image")
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  const randomPart = Math.random().toString(36).slice(2, 10);
+  return `products/${Date.now()}-${randomPart}-${safeName || "image"}`;
+}
+
 function createImageCell(pathValue, productName) {
   const img = document.createElement("img");
   img.className = "product-thumb";
@@ -94,25 +135,34 @@ function getFormValues() {
     ? productCategoryInput.value
     : "Cherry";
 
+  const selectedBadge = (productBadgeInput?.value || "").toUpperCase();
+  const badge = BADGE_OPTIONS.includes(selectedBadge)
+    ? selectedBadge
+    : (productIsNewInput.checked ? "NEW" : "");
+
   return {
     id: productIdInput.value.trim(),
     name: productNameInput.value.trim(),
     price: productPriceInput.value.trim(),
     category,
     description: productDescriptionInput.value.trim(),
-    is_new: productIsNewInput.checked,
+    badge,
+    is_new: badge === "NEW" || productIsNewInput.checked,
     color: productColorInput.value.trim() || "#F4A7A7",
     image_path: existingImagePathInput.value.trim()
   };
 }
 
 function mapProductRow(row) {
+  const rawDescription = row.description || row.desc || "";
+  const parsedBadge = parseBadgeFromDescription(rawDescription);
   return {
     id: row.id,
     name: row.name || "",
     price: row.price || "",
     category: row.category || "",
-    description: row.description || row.desc || "",
+    description: parsedBadge.description,
+    badge: parsedBadge.badge,
     is_new: Boolean(row.is_new),
     color: row.color || "#F4A7A7",
     image_path: row.image_path || row.image || row.images || ""
@@ -129,10 +179,10 @@ function toDbPayload(values) {
   };
 
   if (usingLegacyColumns) {
-    payload.desc = values.description;
+    payload.desc = encodeDescriptionWithBadge(values.description, values.badge);
     payload.image = values.image_path;
   } else {
-    payload.description = values.description;
+    payload.description = encodeDescriptionWithBadge(values.description, values.badge);
     payload.image_path = values.image_path;
   }
 
@@ -147,6 +197,10 @@ function resetForm() {
   productIdInput.value = "";
   existingImagePathInput.value = "";
   productColorInput.value = "#F4A7A7";
+  if (productBadgeInput) {
+    productBadgeInput.value = "";
+  }
+  productIsNewInput.checked = false;
   if (formTitle) {
     formTitle.textContent = "Add Product";
   }
@@ -160,6 +214,11 @@ function startEdit(product) {
   productCategoryInput.value = CATEGORY_OPTIONS.includes(product.category) ? product.category : "Cherry";
   productDescriptionInput.value = product.description || "";
   productIsNewInput.checked = Boolean(product.is_new);
+  if (productBadgeInput) {
+    productBadgeInput.value = BADGE_OPTIONS.includes((product.badge || "").toUpperCase())
+      ? product.badge.toUpperCase()
+      : (product.is_new ? "NEW" : "");
+  }
   productColorInput.value = product.color || "#F4A7A7";
   existingImagePathInput.value = product.image_path || "";
   if (productImageInput) {
@@ -180,7 +239,7 @@ function renderProductsTable() {
   if (!currentProducts.length) {
     productTableBody.innerHTML = `
       <tr>
-        <td colspan="5">No products found.</td>
+        <td colspan="6">No products found.</td>
       </tr>
     `;
     return;
@@ -202,6 +261,9 @@ function renderProductsTable() {
     const categoryCell = document.createElement("td");
     categoryCell.textContent = product.category || "-";
 
+    const badgeCell = document.createElement("td");
+    badgeCell.textContent = product.badge || (product.is_new ? "NEW" : "-");
+
     const actionsCell = document.createElement("td");
     const actionWrap = document.createElement("div");
     actionWrap.className = "row-actions";
@@ -220,29 +282,44 @@ function renderProductsTable() {
     actionWrap.append(editBtn, deleteBtn);
     actionsCell.appendChild(actionWrap);
 
-    row.append(imageCell, nameCell, priceCell, categoryCell, actionsCell);
+    row.append(imageCell, nameCell, priceCell, categoryCell, badgeCell, actionsCell);
     productTableBody.appendChild(row);
   });
 }
 
-async function uploadImageIfNeeded(file) {
+async function uploadImageIfNeeded(file, existingPath = "") {
   if (!file) {
     return null;
   }
 
-  const formData = new FormData();
-  formData.append("image", file);
+  const supabase = await getSupabaseClient();
+  const bucketName = runtimeConfig?.supabaseStorageBucket || "product-images";
+  const objectPath = createStorageObjectName(file.name);
 
-  const response = await fetch("/upload-image", {
-    method: "POST",
-    body: formData
+  const { error: uploadError } = await supabase.storage.from(bucketName).upload(objectPath, file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: file.type || undefined
   });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload.path) {
-    throw new Error(payload.message || "Image upload failed.");
+  if (uploadError) {
+    throw new Error(uploadError.message || "Image upload failed.");
   }
-  return payload.path;
+
+  const { data } = supabase.storage.from(bucketName).getPublicUrl(objectPath);
+  const publicUrl = data?.publicUrl || "";
+  if (!publicUrl) {
+    throw new Error("Unable to get public URL for uploaded image.");
+  }
+
+  if (existingPath && existingPath.includes(`/storage/v1/object/public/${bucketName}/`)) {
+    const marker = `/storage/v1/object/public/${bucketName}/`;
+    const existingObjectPath = existingPath.split(marker)[1] || "";
+    if (existingObjectPath) {
+      await supabase.storage.from(bucketName).remove([existingObjectPath]);
+    }
+  }
+
+  return publicUrl;
 }
 
 async function loadProducts() {
@@ -289,7 +366,7 @@ async function handleSaveProduct(event) {
 
     const selectedFile = productImageInput?.files?.[0];
     if (selectedFile) {
-      const uploadedPath = await uploadImageIfNeeded(selectedFile);
+      const uploadedPath = await uploadImageIfNeeded(selectedFile, values.image_path);
       values.image_path = uploadedPath;
     }
 
